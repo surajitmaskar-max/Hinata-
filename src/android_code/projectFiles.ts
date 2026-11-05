@@ -445,6 +445,8 @@ android {
         }
 
         buildConfigField("String", "GEMINI_API_KEY", "\\"\${System.getenv("GEMINI_API_KEY") ?: ""}\\"")
+        buildConfigField("String", "APP_VERSION_NAME", "\\"1.0.0\\"")
+        buildConfigField("int", "APP_VERSION_CODE", "1")
     }
 
     buildTypes {

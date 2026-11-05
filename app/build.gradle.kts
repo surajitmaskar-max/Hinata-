@@ -48,7 +48,7 @@ android {
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$resolvedGeminiApiKey\"")
         buildConfigField("String", "APP_VERSION_NAME", "\"$hinataVersionName\"")
-        buildConfigField("Int", "APP_VERSION_CODE", "$hinataVersionCode")
+        buildConfigField("int", "APP_VERSION_CODE", "$hinataVersionCode")
     }
 
     signingConfigs {
