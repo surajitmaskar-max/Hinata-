@@ -123,6 +123,20 @@ jobs:
             echo "GEMINI_API_KEY=PLACEHOLDER_KEY_FOR_CI" >> local.properties
           fi
 
+      - name: Run Unit Tests
+        run: |
+          echo "=========================================================="
+          echo "Executing Unit Tests..."
+          echo "=========================================================="
+          ./gradlew test --stacktrace
+
+      - name: Run Lint Checks
+        run: |
+          echo "=========================================================="
+          echo "Executing Android Lint..."
+          echo "=========================================================="
+          ./gradlew lintDebug --stacktrace
+
       - name: Build Release APK
         env:
           KEYSTORE_FILE: ${{ secrets.RELEASE_KEYSTORE_BASE64 && 'keystore/release.jks' || '' }}
