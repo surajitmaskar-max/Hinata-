@@ -32,6 +32,7 @@ val resolvedGeminiApiKey: String = System.getenv("GEMINI_API_KEY")
 android {
     namespace = "com.hinata.ai"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "com.hinata.ai"

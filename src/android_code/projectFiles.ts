@@ -16,29 +16,150 @@ export const ANDROID_PROJECT_FILES: AndroidSourceFile[] = [
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Assemble Android APK
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
-      - uses: android-actions/setup-android@v3
-      - run: chmod +x gradlew
+
+      - name: Set up Android SDK
+        run: |
+          set -e
+          echo "=========================================================="
+          echo "Configuring Android SDK Environment for HINATA AI..."
+          echo "Target API: 35 | Build-Tools: 35.0.0 | MinSdk: 26"
+          echo "=========================================================="
+
+          export ANDROID_HOME="\${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="\${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          SDKMANAGER=""
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+          else
+            SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f -perm /111 2>/dev/null | head -n 1)
+          fi
+
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not found or not executable in $ANDROID_HOME"
+            ls -la "$ANDROID_HOME" || true
+            exit 1
+          fi
+
+          echo "Using sdkmanager binary at: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+          echo "Installing exact Android SDK components (platforms;android-35, build-tools;35.0.0, platform-tools)..."
+          if ! "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" "cmdline-tools;latest"; then
+            echo "::error::Android SDK component installation failed!"
+            "$SDKMANAGER" --list_installed || true
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          echo "Android SDK setup completed successfully!"
+
+      - name: Grant Execute Permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Verify Gradle & Project Build Tasks
+        run: |
+          ./gradlew --version
+          ./gradlew tasks --group=build
+
+      - name: Configure Signing & Environment Secrets
+        env:
+          RELEASE_KEYSTORE_BASE64: \${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON_BASE64: \${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          elif [ -f "app/google-services.json.example" ]; then
+            cp app/google-services.json.example app/google-services.json
+          fi
+
+          if [ -n "$RELEASE_KEYSTORE_BASE64" ]; then
+            mkdir -p app/keystore
+            echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > app/keystore/release.jks
+          fi
+
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          if [ -n "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> local.properties
+          else
+            echo "GEMINI_API_KEY=PLACEHOLDER_KEY_FOR_CI" >> local.properties
+          fi
+
+      - name: Run Unit Tests & Lint Checks
+        run: ./gradlew test --stacktrace
+
+      - name: Build Debug APK (Validation Step)
+        env:
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY || 'PLACEHOLDER_KEY_FOR_CI' }}
+        run: ./gradlew assembleDebug --stacktrace
+
       - name: Build Release APK
+        env:
+          KEYSTORE_FILE: \${{ secrets.RELEASE_KEYSTORE_BASE64 && 'keystore/release.jks' || '' }}
+          KEYSTORE_PASSWORD: \${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: \${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: \${{ secrets.RELEASE_KEY_PASSWORD }}
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY || 'PLACEHOLDER_KEY_FOR_CI' }}
         run: ./gradlew assembleRelease --stacktrace
-      - uses: actions/upload-artifact@v4
+
+      - name: Verify Generated Release APK
+        id: verify_apk
+        run: |
+          RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$RAW_APK" ] || [ ! -f "$RAW_APK" ]; then
+            echo "::error::assembleRelease completed but no APK was found in app/build/outputs/apk/release/"
+            ls -R app/build/outputs/ || true
+            exit 1
+          fi
+          mkdir -p artifacts
+          cp "$RAW_APK" artifacts/HINATA-AI-release.apk
+          echo "apk_path=artifacts/HINATA-AI-release.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: HINATA-AI-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: artifacts/HINATA-AI-release.apk
+          retention-days: 14
 `,
   },
   {
@@ -58,21 +179,84 @@ permissions:
 
 jobs:
   release:
+    name: Build & Publish Release
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
-      - uses: android-actions/setup-android@v3
-      - run: chmod +x gradlew
-      - run: ./gradlew assembleRelease --stacktrace
-      - uses: softprops/action-gh-release@v2
+
+      - name: Set up Android SDK
+        run: |
+          set -e
+          export ANDROID_HOME="\${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="\${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          SDKMANAGER=""
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+          else
+            SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f -perm /111 2>/dev/null | head -n 1)
+          fi
+
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" "cmdline-tools;latest"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+      - name: Grant Execute Permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_FILE: \${{ secrets.RELEASE_KEYSTORE_BASE64 && 'keystore/release.jks' || '' }}
+          KEYSTORE_PASSWORD: \${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: \${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: \${{ secrets.RELEASE_KEY_PASSWORD }}
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY || 'PLACEHOLDER_KEY_FOR_CI' }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare Release Assets
+        id: prepare_assets
+        run: |
+          TAG_NAME="\${{ github.ref_name }}"
+          RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          TARGET_APK="HINATA-AI-\${TAG_NAME}-release.apk"
+          cp "$RAW_APK" "$TARGET_APK"
+          echo "release_apk=$TARGET_APK" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HINATA-AI-\${{ github.ref_name }}-apk
+          path: \${{ steps.prepare_assets.outputs.release_apk }}
+          retention-days: 30
+
+      - name: Generate Release Notes & Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           name: HINATA AI \${{ github.ref_name }}
-          files: app/build/outputs/apk/release/*.apk
+          files: \${{ steps.prepare_assets.outputs.release_apk }}
+          draft: false
+          prerelease: false
+          body: |
+            ## 🌟 HINATA AI \${{ github.ref_name }}
+            Official release of **HINATA AI** Android Application.
+            **Created & Developed by Surajit Naskar**.
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 `,
@@ -86,6 +270,7 @@ jobs:
 org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 android.useAndroidX=true
 android.enableJetifier=false
+android.builder.sdkDownload=true
 kotlin.code.style=official
 
 # Semantic Version Management for HINATA AI
@@ -169,6 +354,7 @@ include(":app")
 android {
     namespace = "com.jarvis.ai"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "com.jarvis.ai"

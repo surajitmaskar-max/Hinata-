@@ -34,10 +34,76 @@ jobs:
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          set -e
+          echo "=========================================================="
+          echo "Configuring Android SDK Environment for HINATA AI..."
+          echo "Target API: 35 | Build-Tools: 35.0.0 | MinSdk: 26"
+          echo "=========================================================="
+
+          # Resolve Android SDK directory from runner environment
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          # Add SDK command line binaries to PATH
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          # Locate sdkmanager executable
+          SDKMANAGER=""
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+          else
+            SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f -perm /111 2>/dev/null | head -n 1)
+          fi
+
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not found or not executable in $ANDROID_HOME"
+            echo "Installed files in $ANDROID_HOME:"
+            ls -la "$ANDROID_HOME" || true
+            exit 1
+          fi
+
+          echo "Using sdkmanager binary at: $SDKMANAGER"
+
+          # 1. Accept all existing Android SDK licenses automatically
+          echo "Accepting Android SDK licenses..."
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+          # 2. Install exact SDK components required by HINATA AI
+          echo "Installing exact Android SDK components (platforms;android-35, build-tools;35.0.0, platform-tools)..."
+          if ! "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" "cmdline-tools;latest"; then
+            echo "::error::Android SDK component installation failed!"
+            echo "--- Diagnostics ---"
+            echo "Requested: platforms;android-35, build-tools;35.0.0, platform-tools"
+            echo "Installed packages:"
+            "$SDKMANAGER" --list_installed || true
+            exit 1
+          fi
+
+          # Accept any licenses introduced by newly installed packages
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+          echo "Android SDK setup completed successfully!"
+          echo "Installed components summary:"
+          "$SDKMANAGER" --list_installed | grep -E 'platforms;android-35|build-tools;35|platform-tools' || true
 
       - name: Grant Execute Permission to gradlew
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
+
+      - name: Verify Gradle & Project Build Tasks
+        run: |
+          echo "=========================================================="
+          echo "Verifying Gradle Wrapper & Environment..."
+          echo "=========================================================="
+          ./gradlew --version
+          echo "Listing available build tasks..."
+          ./gradlew tasks --group=build
 
       - name: Configure Signing & Environment Secrets
         env:
@@ -45,23 +111,23 @@ jobs:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Inject Google Services JSON for Firebase if configured in GitHub Secrets
+          # 1. Restore Firebase google-services.json if provided in GitHub Secrets
           if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
             echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
-            echo "Successfully restored app/google-services.json from GitHub Secrets"
+            echo "Restored app/google-services.json from GitHub Secrets"
           elif [ -f "app/google-services.json.example" ]; then
             cp app/google-services.json.example app/google-services.json
-            echo "Using placeholder google-services.json for CI compilation"
+            echo "Using placeholder google-services.json for CI verification"
           fi
 
-          # Inject Release Signing Keystore if configured in GitHub Secrets
+          # 2. Restore Release Keystore if provided in GitHub Secrets
           if [ -n "$RELEASE_KEYSTORE_BASE64" ]; then
             mkdir -p app/keystore
             echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > app/keystore/release.jks
-            echo "Successfully restored release keystore from GitHub Secrets"
+            echo "Restored release keystore from GitHub Secrets"
           fi
 
-          # Configure local.properties with Gemini API key
+          # 3. Configure local.properties with Android SDK path and Gemini API key
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           if [ -n "$GEMINI_API_KEY" ]; then
             echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> local.properties
@@ -69,10 +135,15 @@ jobs:
             echo "GEMINI_API_KEY=PLACEHOLDER_KEY_FOR_CI" >> local.properties
           fi
 
-      - name: Run Unit Tests & Lint
+      - name: Run Unit Tests & Lint Checks
         run: ./gradlew test --stacktrace
 
-      - name: Assemble Release APK
+      - name: Build Debug APK (Validation Step)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'PLACEHOLDER_KEY_FOR_CI' }}
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build Release APK
         env:
           KEYSTORE_FILE: ${{ secrets.RELEASE_KEYSTORE_BASE64 && 'keystore/release.jks' || '' }}
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -81,21 +152,26 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'PLACEHOLDER_KEY_FOR_CI' }}
         run: ./gradlew assembleRelease --stacktrace
 
-      - name: Verify Generated APK
+      - name: Verify Generated Release APK
         id: verify_apk
         run: |
-          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
-            echo "::error::Release APK was not generated in app/build/outputs/apk/release/"
+          echo "Searching for generated Release APK..."
+          RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+
+          if [ -z "$RAW_APK" ] || [ ! -f "$RAW_APK" ]; then
+            echo "::error::assembleRelease completed but no APK was found in app/build/outputs/apk/release/"
+            echo "Contents of app/build/outputs/:"
+            ls -R app/build/outputs/ || true
             exit 1
           fi
-          echo "Found generated APK: $APK_PATH"
-          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
 
-          # Create a standardized named copy for clean artifact download
+          echo "Found generated Release APK: $RAW_APK"
           mkdir -p artifacts
-          cp "$APK_PATH" artifacts/HINATA-AI-release.apk
-          ls -lh artifacts/
+          cp "$RAW_APK" artifacts/HINATA-AI-release.apk
+
+          echo "apk_path=artifacts/HINATA-AI-release.apk" >> "$GITHUB_OUTPUT"
+          echo "Artifact ready:"
+          ls -lh artifacts/HINATA-AI-release.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

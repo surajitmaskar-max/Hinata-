@@ -25,10 +25,62 @@ jobs:
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          set -e
+          echo "=========================================================="
+          echo "Configuring Android SDK Environment for HINATA AI Release..."
+          echo "Target API: 35 | Build-Tools: 35.0.0 | MinSdk: 26"
+          echo "=========================================================="
+
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          SDKMANAGER=""
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+          else
+            SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f -perm /111 2>/dev/null | head -n 1)
+          fi
+
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not found or not executable in $ANDROID_HOME"
+            ls -la "$ANDROID_HOME" || true
+            exit 1
+          fi
+
+          echo "Using sdkmanager binary at: $SDKMANAGER"
+
+          # Accept all existing licenses
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+          # Install exact required components
+          echo "Installing platforms;android-35 build-tools;35.0.0 platform-tools..."
+          if ! "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" "cmdline-tools;latest"; then
+            echo "::error::Android SDK component installation failed!"
+            "$SDKMANAGER" --list_installed || true
+            exit 1
+          fi
+
+          # Accept newly introduced licenses
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+
+          echo "Android SDK configured successfully for release!"
 
       - name: Grant Execute Permission to gradlew
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
+
+      - name: Verify Gradle Environment
+        run: |
+          ./gradlew --version
+          ./gradlew tasks --group=build
 
       - name: Configure Signing & Environment Secrets
         env:
@@ -54,7 +106,7 @@ jobs:
             echo "GEMINI_API_KEY=PLACEHOLDER_KEY_FOR_CI" >> local.properties
           fi
 
-      - name: Assemble Release APK
+      - name: Build Release APK
         env:
           KEYSTORE_FILE: ${{ secrets.RELEASE_KEYSTORE_BASE64 && 'keystore/release.jks' || '' }}
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -67,10 +119,12 @@ jobs:
         id: prepare_assets
         run: |
           TAG_NAME="${{ github.ref_name }}"
+          echo "Searching for generated release APK for tag: $TAG_NAME..."
           RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          
+
           if [ -z "$RAW_APK" ] || [ ! -f "$RAW_APK" ]; then
-            echo "::error::Release APK not found"
+            echo "::error::Release APK not found in app/build/outputs/apk/release/"
+            ls -R app/build/outputs/ || true
             exit 1
           fi
 
@@ -78,6 +132,14 @@ jobs:
           cp "$RAW_APK" "$TARGET_APK"
           echo "Release APK prepared: $TARGET_APK"
           echo "release_apk=$TARGET_APK" >> "$GITHUB_OUTPUT"
+          ls -lh "$TARGET_APK"
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HINATA-AI-${{ github.ref_name }}-apk
+          path: ${{ steps.prepare_assets.outputs.release_apk }}
+          retention-days: 30
 
       - name: Generate Release Notes & Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -90,6 +152,7 @@ jobs:
             ## 🌟 HINATA AI ${{ github.ref_name }}
 
             Welcome to the official release of **HINATA AI** — Your Intelligent World personal Android AI assistant!
+            **Created & Developed by Surajit Naskar**.
 
             ### 🚀 What's New & Included
             - 🔮 **Premium Purple Orb UI**: Holographic glowing plasma sphere with audio-reactive animations, tilted planetary rings, and 6 active states.
