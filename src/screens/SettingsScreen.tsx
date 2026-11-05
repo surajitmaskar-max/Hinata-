@@ -719,6 +719,39 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           </div>
         </div>
+
+        {/* About HINATA AI - Permanent Creator Identity Section */}
+        <div className="p-5 rounded-2xl bg-gradient-to-b from-purple-950/60 to-slate-900 border border-purple-500/40 shadow-xl shadow-purple-950/20 space-y-3 text-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-purple-500/20">
+            <div className="flex items-center gap-2 text-white font-bold text-sm">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span>About HINATA AI</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-purple-900/60 border border-purple-500/40 text-[10px] text-purple-200 font-mono">
+              v1.0.0
+            </span>
+          </div>
+
+          <div className="space-y-1.5 pt-1">
+            <h3 className="text-base font-extrabold tracking-wide text-white">
+              HINATA AI
+            </h3>
+            <p className="text-xs font-semibold text-purple-300">
+              Created &amp; Developed by Surajit Naskar
+            </p>
+            <p className="text-[11px] text-slate-400 leading-relaxed pt-1">
+              An advanced Android personal assistant combining a glowing holographic purple orb, expressive multilingual anime voice personality (Bengali, Hindi, English), and native device hardware automation.
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-purple-500/20 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Tagline: <span className="text-purple-300 italic">"Your Intelligent World."</span></span>
+            <span className="text-emerald-400 flex items-center gap-1 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Official Build
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

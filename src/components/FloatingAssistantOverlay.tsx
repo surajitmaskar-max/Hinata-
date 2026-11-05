@@ -15,7 +15,7 @@ interface FloatingAssistantOverlayProps {
 export const FloatingAssistantOverlay: React.FC<FloatingAssistantOverlayProps> = ({
   isOpen,
   onClose,
-  triggerKeyword = 'Hey JARVIS',
+  triggerKeyword = 'Hey HINATA',
   currentLanguage,
   onExecuteCommand,
 }) => {
@@ -56,7 +56,7 @@ export const FloatingAssistantOverlay: React.FC<FloatingAssistantOverlayProps> =
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs font-semibold text-slate-200 font-display">
-            JARVIS Overlay Assistant
+            HINATA Overlay Assistant
           </span>
           <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-500/20 text-sky-400">
             {triggerKeyword}

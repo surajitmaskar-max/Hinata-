@@ -681,6 +681,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
           )}
         </div>
+
+        {/* Creator Attribution Footer */}
+        <div className="pt-3 mt-2 border-t border-slate-800/80 text-center text-[10px] text-purple-300/80">
+          HINATA AI • Created &amp; Developed by Surajit Naskar
+        </div>
       </div>
     </div>
   );

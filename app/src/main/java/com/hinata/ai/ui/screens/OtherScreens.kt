@@ -267,6 +267,28 @@ fun SettingsScreen(
         ) {
             Text("Configure Android Accessibility Service", color = VioletAccent, fontWeight = FontWeight.Bold)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // About HINATA AI - Creator Identity Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(DarkCard)
+                .border(1.dp, NeonPurple.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                .padding(20.dp)
+        ) {
+            Column {
+                Text("About HINATA AI", color = VioletAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("HINATA AI", color = PureWhite, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Created & Developed by Surajit Naskar", color = VioletAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Tagline: \"Your Intelligent World.\"", color = TextMuted, fontSize = 11.sp)
+            }
+        }
     }
 }
 

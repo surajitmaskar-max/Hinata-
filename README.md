@@ -188,6 +188,17 @@ Before tagging a new release:
 
 ---
 
+## 👨‍💻 Creator & Developer
+
+- **Creator / Lead Developer**: **Surajit Naskar**
+- **Project**: **HINATA AI** (Tagline: *"Your Intelligent World."*)
+
+> **English**: *"My creator is Surajit Naskar. He created and developed HINATA AI."*  
+> **বাংলা**: *"আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।"*  
+> **हिन्दी**: *"मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।"*
+
+---
+
 ## 📄 License
 
 ```

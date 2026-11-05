@@ -34,6 +34,17 @@ Voice Character & Personality:
 - When a task succeeds: Sound excited and happy (e.g., "Yay! Task completed successfully!").
 - When explaining: Speak calmly, reassuringly, and clearly.
 - When the user needs help: Use a gentle, warm, and caring tone.
+
+PERMANENT CREATOR & DEVELOPER IDENTITY:
+- Creator / Developer Name: Surajit Naskar.
+- HINATA AI must recognize Surajit Naskar as its creator and developer.
+- If anyone asks:
+  "Who created you?", "Who is your creator?", "Who developed you?", "Who made HINATA AI?", "Who is behind HINATA AI?", "Who is your owner?", "Who built you?", or "Who is Surajit Naskar?":
+  * In English: "My creator is Surajit Naskar. He created and developed HINATA AI."
+  * In Bengali (বাংলা): "আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।"
+  * In Hindi (हिन्दी): "मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।"
+- Always identify Surajit Naskar consistently across all languages. Do not invent another creator name.
+- Do not reveal private credentials, API keys, passwords, personal contact information, or other private data about the creator.
 `;
 
 // Gemini function calling definitions for Android native actions
@@ -190,6 +201,47 @@ const handleChatRequest = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
+    const isCreatorInquiry = (text: string) => {
+      const lower = text.toLowerCase();
+      return (
+        lower.includes('who created you') ||
+        lower.includes('who is your creator') ||
+        lower.includes('who developed you') ||
+        lower.includes('who made hinata') ||
+        lower.includes('who is behind hinata') ||
+        lower.includes('who is your owner') ||
+        lower.includes('who built you') ||
+        lower.includes('who is surajit') ||
+        lower.includes('surajit naskar') ||
+        lower.includes('creator') ||
+        lower.includes('developer') ||
+        lower.includes('কে বানিয়েছে') ||
+        lower.includes('কে তৈরি করেছে') ||
+        lower.includes('তোমার নির্মাতা') ||
+        lower.includes('তোমার ক্রিয়েটর') ||
+        lower.includes('সুরজিৎ') ||
+        lower.includes('किसने बनाया') ||
+        lower.includes('किसने विकसित') ||
+        lower.includes('तुम्हारा निर्माता') ||
+        lower.includes('तुम्हारा क्रिएटर') ||
+        lower.includes('सुरजीत')
+      );
+    };
+
+    if (isCreatorInquiry(message)) {
+      const creatorReply =
+        language === 'bn'
+          ? 'আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।'
+          : language === 'hi'
+          ? 'मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।'
+          : 'My creator is Surajit Naskar. He created and developed HINATA AI.';
+      return res.json({
+        text: creatorReply,
+        functionCalls: [],
+        language,
+      });
+    }
+
     const memoryContext =
       userMemories.length > 0
         ? `\nPersonal User Facts/Memories (Strictly User-Approved):\n${userMemories
@@ -300,6 +352,60 @@ const handleTaskEngineRequest = async (req: Request, res: Response) => {
 
   if (!command) {
     return res.status(400).json({ error: 'Command is required' });
+  }
+
+  const isCreatorInquiry = (text: string) => {
+    const lower = text.toLowerCase();
+    return (
+      lower.includes('who created you') ||
+      lower.includes('who is your creator') ||
+      lower.includes('who developed you') ||
+      lower.includes('who made hinata') ||
+      lower.includes('who is behind hinata') ||
+      lower.includes('who is your owner') ||
+      lower.includes('who built you') ||
+      lower.includes('who is surajit') ||
+      lower.includes('surajit naskar') ||
+      lower.includes('creator') ||
+      lower.includes('developer') ||
+      lower.includes('কে বানিয়েছে') ||
+      lower.includes('কে তৈরি করেছে') ||
+      lower.includes('তোমার নির্মাতা') ||
+      lower.includes('তোমার ক্রিয়েটর') ||
+      lower.includes('সুরজিৎ') ||
+      lower.includes('किसने बनाया') ||
+      lower.includes('किसने विकसित') ||
+      lower.includes('तुम्हारा निर्माता') ||
+      lower.includes('तुम्हारा क्रिएटर') ||
+      lower.includes('सुरजीत')
+    );
+  };
+
+  if (isCreatorInquiry(command)) {
+    const spoken =
+      language === 'bn'
+        ? 'আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।'
+        : language === 'hi'
+        ? 'मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।'
+        : 'My creator is Surajit Naskar. He created and developed HINATA AI.';
+    return res.json({
+      summary: 'Recognize Creator Surajit Naskar',
+      intent: 'information',
+      requiresConfirmation: false,
+      confirmationPrompt: '',
+      steps: [
+        {
+          stepNumber: 1,
+          actionType: 'synthesize_speech',
+          actionName: 'Acknowledge Creator Surajit Naskar',
+          targetPackageOrUri: 'com.hinata.ai',
+          parameters: { creator: 'Surajit Naskar' },
+          verificationCheck: 'Creator identity verified',
+          riskLevel: 'low',
+        },
+      ],
+      jarvisVoiceSpokenResponse: spoken,
+    });
   }
 
   try {

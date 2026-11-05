@@ -452,14 +452,16 @@ export const HinataHomeScreen: React.FC<HinataHomeScreenProps> = ({
                   className="w-full px-3 py-2.5 rounded-xl hover:bg-purple-900/40 text-left text-slate-200 hover:text-white flex items-center gap-2.5 cursor-pointer"
                 >
                   <ShieldCheck className="w-4 h-4 text-purple-400" />
-                  <span>Security &amp; Isolation Probe</span>
+                  <span>About &amp; Creator Identity</span>
                 </button>
               </div>
             </div>
 
-            {/* Drawer Footer */}
-            <div className="pt-4 border-t border-slate-800 text-[10px] text-slate-500 font-mono text-center">
-              HINATA AI v3.8 • Android Jetpack
+            {/* Drawer Footer with Creator Attribution */}
+            <div className="pt-4 border-t border-purple-500/20 text-center space-y-1">
+              <p className="text-[11px] font-bold text-white tracking-wide">HINATA AI</p>
+              <p className="text-[10px] text-purple-300 font-medium">Created &amp; Developed by Surajit Naskar</p>
+              <p className="text-[9px] text-slate-500 font-mono">v1.0.0 • Android Jetpack Compose</p>
             </div>
           </div>
         </div>

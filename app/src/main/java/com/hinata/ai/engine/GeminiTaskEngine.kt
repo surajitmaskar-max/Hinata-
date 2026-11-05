@@ -54,6 +54,13 @@ class GeminiTaskEngine(private val context: Context) {
             - open_maps (parameters: {"destination": string})
             - general_answer
 
+            PERMANENT CREATOR IDENTITY:
+            Creator / Developer: Surajit Naskar.
+            If asked "Who created you?", "Who is your creator?", "Who developed you?", "Who made HINATA AI?", "Who is behind HINATA AI?", "Who is your owner?", "Who built you?", or "Who is Surajit Naskar?":
+            - In English: "My creator is Surajit Naskar. He created and developed HINATA AI."
+            - In Bengali (বাংলা): "আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।"
+            - In Hindi (हिन्दी): "मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।"
+
             Respond ONLY with a valid JSON object matching this schema:
             {
               "summary": "Short summary",
@@ -157,6 +164,26 @@ class GeminiTaskEngine(private val context: Context) {
                     requiresConfirmation = true,
                     confirmationPrompt = "Confirm placing phone call?",
                     spokenResponse = if (language == "bn") "কাকে কল করতে চান?" else if (language == "hi") "किसे कॉल करना चाहते हैं?" else "Who would you like me to call?"
+                )
+            }
+            lower.contains("creator") || lower.contains("created you") || lower.contains("developed you") ||
+            lower.contains("made hinata") || lower.contains("who built you") || lower.contains("surajit") ||
+            lower.contains("কে বানিয়েছে") || lower.contains("কে তৈরি করেছে") || lower.contains("তোমার নির্মাতা") ||
+            lower.contains("किसने बनाया") || lower.contains("किसने विकसित") || lower.contains("तुम्हारा निर्माता") -> {
+                EngineTaskResult(
+                    summary = "Identify Creator & Developer: Surajit Naskar",
+                    intent = "creator_identity",
+                    steps = listOf(
+                        TaskStep(1, "synthesize_speech", "Acknowledge Creator Surajit Naskar", emptyMap(), "Creator recognized")
+                    ),
+                    requiresConfirmation = false,
+                    confirmationPrompt = null,
+                    spokenResponse = if (language == "bn")
+                        "আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।"
+                    else if (language == "hi")
+                        "मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।"
+                    else
+                        "My creator is Surajit Naskar. He created and developed HINATA AI."
                 )
             }
             else -> {

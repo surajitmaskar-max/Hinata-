@@ -13,6 +13,7 @@ import {
 import { BackgroundServiceState } from './types/jarvis';
 import { soundEngine } from './utils/audio';
 import { speechManager } from './utils/speech';
+import { isCreatorQuery, getCreatorResponse } from './utils/creator';
 import { TopBar } from './components/TopBar';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { ForegroundNotificationPill } from './components/ForegroundNotificationPill';
@@ -421,6 +422,34 @@ function AppContent() {
     lang: JarvisLanguage
   ): Promise<string | undefined> => {
     try {
+      if (isCreatorQuery(commandText)) {
+        const creatorResponse = getCreatorResponse(lang);
+        soundEngine.playSuccess();
+        const newTask: TaskRecord = {
+          id: `task_${Date.now()}`,
+          command: commandText,
+          summary: 'Recognized Creator & Developer: Surajit Naskar',
+          intent: 'creator_recognition',
+          language: lang,
+          timestamp: Date.now(),
+          status: 'COMPLETED',
+          steps: [
+            {
+              stepNumber: 1,
+              actionType: 'synthesize_speech',
+              actionName: 'Acknowledge Creator Surajit Naskar',
+              verificationCheck: 'Permanent creator identity verified',
+              status: 'verified',
+            },
+          ],
+          requiresConfirmation: false,
+          voiceResponse: creatorResponse,
+          verified: true,
+        };
+        setTasks((prev) => [newTask, ...prev]);
+        return creatorResponse;
+      }
+
       // 1. Call Task Engine endpoint for step decomposition & function verification
       const engineRes = await fetch('/api/jarvis/task-engine', {
         method: 'POST',
@@ -524,6 +553,29 @@ function AppContent() {
       language: lang,
     };
     setMessages((prev) => [...prev, userMsg]);
+
+    if (isCreatorQuery(text)) {
+      const creatorReply = getCreatorResponse(lang);
+      const assistantMsg: ChatMessage = {
+        id: `msg_a_${Date.now()}`,
+        role: 'assistant',
+        content: creatorReply,
+        timestamp: Date.now(),
+        language: lang,
+      };
+      const updatedChat = [...messages, userMsg, assistantMsg];
+      setMessages(updatedChat);
+      soundEngine.playSuccess();
+      if (currentUser) {
+        saveUserChatSession(currentUser.uid, 'active_session', {
+          title: 'HINATA Conversation',
+          messages: updatedChat,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }).catch((e) => console.log('Saved chat session error:', e));
+      }
+      return;
+    }
 
     try {
       const res = await fetch('/api/jarvis/chat', {
