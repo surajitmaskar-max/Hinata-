@@ -92,13 +92,29 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           echo "Android SDK setup completed successfully!"
 
-      - name: Grant Execute Permission to gradlew
-        run: chmod +x ./gradlew
-
-      - name: Verify Gradle & Project Build Tasks
+      - name: Grant Execute Permission
         run: |
+          chmod +x ./gradlew
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ] || [ ! -s "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "::warning::gradle/wrapper/gradle-wrapper.jar missing. Restoring official Gradle 8.9 wrapper jar..."
+            mkdir -p gradle/wrapper
+            curl -sSL -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar
+          fi
+          ls -lh gradle/wrapper/gradle-wrapper.jar
+
+      - name: Verify Gradle Wrapper
+        run: |
+          echo "=========================================================="
+          echo "Verifying Gradle Wrapper version..."
+          echo "=========================================================="
           ./gradlew --version
-          ./gradlew tasks --group=build
+
+      - name: Verify Project Configuration
+        run: |
+          echo "=========================================================="
+          echo "Verifying project tasks & build configuration..."
+          echo "=========================================================="
+          ./gradlew tasks
 
       - name: Configure Signing & Environment Secrets
         env:
@@ -218,8 +234,29 @@ jobs:
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" "cmdline-tools;latest"
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
 
-      - name: Grant Execute Permission to gradlew
-        run: chmod +x ./gradlew
+      - name: Grant Execute Permission
+        run: |
+          chmod +x ./gradlew
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ] || [ ! -s "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "::warning::gradle/wrapper/gradle-wrapper.jar missing. Restoring official Gradle 8.9 wrapper jar..."
+            mkdir -p gradle/wrapper
+            curl -sSL -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar
+          fi
+          ls -lh gradle/wrapper/gradle-wrapper.jar
+
+      - name: Verify Gradle Wrapper
+        run: |
+          echo "=========================================================="
+          echo "Verifying Gradle Wrapper version..."
+          echo "=========================================================="
+          ./gradlew --version
+
+      - name: Verify Project Configuration
+        run: |
+          echo "=========================================================="
+          echo "Verifying project tasks & build configuration..."
+          echo "=========================================================="
+          ./gradlew tasks
 
       - name: Build Release APK
         env:
@@ -276,6 +313,20 @@ kotlin.code.style=official
 # Semantic Version Management for HINATA AI
 hinata.versionCode=1
 hinata.versionName=1.0.0
+`,
+  },
+  {
+    path: 'gradle/wrapper/gradle-wrapper.properties',
+    name: 'gradle-wrapper.properties',
+    category: 'gradle',
+    description: 'Declares Gradle 8.9 distribution URL and wrapper parameters',
+    content: `distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.9-bin.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
 `,
   },
   {

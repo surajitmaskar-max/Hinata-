@@ -93,17 +93,30 @@ jobs:
           echo "Installed components summary:"
           "$SDKMANAGER" --list_installed | grep -E 'platforms;android-35|build-tools;35|platform-tools' || true
 
-      - name: Grant Execute Permission to gradlew
-        run: chmod +x ./gradlew
+      - name: Grant Execute Permission
+        run: |
+          chmod +x ./gradlew
+          # Verify that gradle/wrapper/gradle-wrapper.jar exists and is valid
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ] || [ ! -s "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "::warning::gradle/wrapper/gradle-wrapper.jar missing. Restoring official Gradle 8.9 wrapper jar..."
+            mkdir -p gradle/wrapper
+            curl -sSL -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar
+          fi
+          ls -lh gradle/wrapper/gradle-wrapper.jar
 
-      - name: Verify Gradle & Project Build Tasks
+      - name: Verify Gradle Wrapper
         run: |
           echo "=========================================================="
-          echo "Verifying Gradle Wrapper & Environment..."
+          echo "Verifying Gradle Wrapper version..."
           echo "=========================================================="
           ./gradlew --version
-          echo "Listing available build tasks..."
-          ./gradlew tasks --group=build
+
+      - name: Verify Project Configuration
+        run: |
+          echo "=========================================================="
+          echo "Verifying project tasks & build configuration..."
+          echo "=========================================================="
+          ./gradlew tasks
 
       - name: Configure Signing & Environment Secrets
         env:

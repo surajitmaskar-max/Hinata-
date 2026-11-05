@@ -12,6 +12,7 @@ coverage/
 .gradle/
 buildOutputCleanup/
 configuration-cache/
+!gradle/wrapper/gradle-wrapper.jar
 
 # Android Studio / IntelliJ IDEA
 .idea/

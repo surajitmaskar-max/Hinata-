@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { ANDROID_PROJECT_FILES } from '../android_code/projectFiles';
+import { GRADLE_WRAPPER_JAR_BASE64 } from '../android_code/gradleWrapperJarBase64';
 
 /**
  * Bundles the entire production-ready Android Studio project into a downloadable ZIP archive.
@@ -28,19 +29,8 @@ zipStorePath=wrapper/dists
 `
   );
 
-  root.file(
-    'gradlew',
-    `#!/bin/sh
-exec gradle "$@"
-`
-  );
-
-  root.file(
-    'gradlew.bat',
-    `@rem Gradle startup script for Windows
-gradle %*
-`
-  );
+  // Add official Gradle 8.9 Wrapper Jar (binary)
+  root.file('gradle/wrapper/gradle-wrapper.jar', GRADLE_WRAPPER_JAR_BASE64, { base64: true });
 
   root.file(
     'local.properties.example',
