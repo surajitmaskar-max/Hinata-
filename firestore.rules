@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validators
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['displayName', 'email', 'preferredLanguage']) &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() <= 200 &&
+             (data.preferredLanguage in ['en', 'bn', 'hi']) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+             (!('preferredVoice' in data) || (data.preferredVoice is string && data.preferredVoice.size() <= 50));
+    }
+
+    function isValidChat(data) {
+      return data.keys().hasAll(['messages', 'createdAt']) &&
+             data.messages is list && data.messages.size() <= 500 &&
+             (!('title' in data) || (data.title is string && data.title.size() <= 100));
+    }
+
+    function isValidMemory(data) {
+      return data.keys().hasAll(['approvedMemory', 'createdAt']) &&
+             data.approvedMemory is string && data.approvedMemory.size() > 0 && data.approvedMemory.size() <= 1000 &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 50));
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['taskName', 'status', 'createdAt']) &&
+             data.taskName is string && data.taskName.size() > 0 && data.taskName.size() <= 200 &&
+             (data.status in ['pending', 'running', 'completed', 'failed']) &&
+             (!('result' in data) || (data.result is string && data.result.size() <= 1000));
+    }
+
+    function isValidAutomation(data) {
+      return data.keys().hasAll(['automationName', 'enabled']) &&
+             data.automationName is string && data.automationName.size() > 0 && data.automationName.size() <= 200 &&
+             data.enabled is bool &&
+             (!('configuration' in data) || (data.configuration is string && data.configuration.size() <= 2000));
+    }
+
+    // 1. User Profile: /users/{uid}
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false; // Deny querying other users list
+      allow create: if isOwner(uid) && isValidUserProfile(incoming());
+      allow update: if isOwner(uid) && isValidUserProfile(incoming());
+      allow delete: if isOwner(uid);
+
+      // 2. Isolated Chats: /users/{uid}/chats/{chatId}
+      match /chats/{chatId} {
+        allow get, list: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidId(chatId) && isValidChat(incoming());
+        allow update: if isOwner(uid) && isValidId(chatId) && isValidChat(incoming());
+        allow delete: if isOwner(uid) && isValidId(chatId);
+      }
+
+      // 3. Isolated Approved Memory: /users/{uid}/memory/{memoryId}
+      match /memory/{memoryId} {
+        allow get, list: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidId(memoryId) && isValidMemory(incoming());
+        allow update: if isOwner(uid) && isValidId(memoryId) && isValidMemory(incoming());
+        allow delete: if isOwner(uid) && isValidId(memoryId);
+      }
+
+      // 4. Isolated Tasks: /users/{uid}/tasks/{taskId}
+      match /tasks/{taskId} {
+        allow get, list: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidId(taskId) && isValidTask(incoming());
+        allow update: if isOwner(uid) && isValidId(taskId) && isValidTask(incoming());
+        allow delete: if isOwner(uid) && isValidId(taskId);
+      }
+
+      // 5. Isolated Automations: /users/{uid}/automations/{automationId}
+      match /automations/{automationId} {
+        allow get, list: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidId(automationId) && isValidAutomation(incoming());
+        allow update: if isOwner(uid) && isValidId(automationId) && isValidAutomation(incoming());
+        allow delete: if isOwner(uid) && isValidId(automationId);
+      }
+    }
+  }
+}

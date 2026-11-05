@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with personal preferences and identity",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "User display name for personalized greetings",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 200
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar photo URL",
+          "maxLength": 500
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "Preferred interface and voice language (en, bn, hi)",
+          "enum": ["en", "bn", "hi"]
+        },
+        "preferredVoice": {
+          "type": "string",
+          "description": "Preferred anime voice preset",
+          "maxLength": 50
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["displayName", "email", "preferredLanguage"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "Isolated chat session for the specific user",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of conversation",
+          "maxLength": 100
+        },
+        "messages": {
+          "type": "array",
+          "description": "List of user and Hinata conversation messages"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Chat creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Chat update timestamp"
+        }
+      },
+      "required": ["messages", "createdAt"]
+    },
+    "PersonalMemory": {
+      "title": "PersonalMemory",
+      "description": "User-approved personal facts and preferences remembered by Hinata",
+      "type": "object",
+      "properties": {
+        "approvedMemory": {
+          "type": "string",
+          "description": "The approved factual memory string",
+          "maxLength": 1000
+        },
+        "category": {
+          "type": "string",
+          "description": "Category tag like preference, schedule, contact, hobby",
+          "maxLength": 50
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when user approved memory"
+        }
+      },
+      "required": ["approvedMemory", "createdAt"]
+    },
+    "UserTask": {
+      "title": "UserTask",
+      "description": "Task executed or tracked for this user",
+      "type": "object",
+      "properties": {
+        "taskName": {
+          "type": "string",
+          "description": "Name of the task",
+          "maxLength": 200
+        },
+        "status": {
+          "type": "string",
+          "description": "Execution status",
+          "enum": ["pending", "running", "completed", "failed"]
+        },
+        "result": {
+          "type": "string",
+          "description": "Execution summary or outcome",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["taskName", "status", "createdAt"]
+    },
+    "UserAutomation": {
+      "title": "UserAutomation",
+      "description": "Configured routine automation rule for user",
+      "type": "object",
+      "properties": {
+        "automationName": {
+          "type": "string",
+          "description": "Automation title",
+          "maxLength": 200
+        },
+        "configuration": {
+          "type": "string",
+          "description": "JSON or text configuration for triggers and actions",
+          "maxLength": 2000
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether automation is active"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["automationName", "enabled"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "Private user profile document"
+    },
+    "/users/{uid}/chats/{chatId}": {
+      "schema": "ChatSession",
+      "description": "User private chats"
+    },
+    "/users/{uid}/memory/{memoryId}": {
+      "schema": "PersonalMemory",
+      "description": "User private approved memories"
+    },
+    "/users/{uid}/tasks/{taskId}": {
+      "schema": "UserTask",
+      "description": "User private task logs"
+    },
+    "/users/{uid}/automations/{automationId}": {
+      "schema": "UserAutomation",
+      "description": "User private automation workflows"
+    }
+  }
+}

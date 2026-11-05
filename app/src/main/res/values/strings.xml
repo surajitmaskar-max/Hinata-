@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">HINATA AI</string>
+    <string name="app_tagline">Your Intelligent World.</string>
+    <string name="accessibility_service_description">Enables HINATA AI to navigate screens, click controls, and automate user-directed phone operations hands-free.</string>
+    <string name="notification_listener_description">Allows HINATA AI to read incoming messages and notify you through hands-free anime voice alerts.</string>
+    <string name="channel_voice_service">HINATA Always-On Wake Word Service</string>
+    <string name="channel_voice_description">Active microphone service for low-latency on-device \'Hey HINATA\' keyword detection.</string>
+    <string name="greeting_bn">হাই! আমি হিনাটা। বলো, আজ তোমার জন্য কী করতে পারি?</string>
+    <string name="greeting_en">Hello! I\'m Hinata. I\'m ready to help you!</string>
+    <string name="greeting_hi">हाय! मैं हिनाटा हूँ। बताओ, आज मैं तुम्हारी क्या मदद करूँ?</string>
+</resources>

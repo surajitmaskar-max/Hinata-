@@ -1,0 +1,6 @@
+{
+  "name": "HINATA AI – Your Intelligent World",
+  "description": "Ultra-premium Android AI personal assistant combining a 3D animated AI character, interactive glowing orb, trilingual voice intelligence, and native device automation.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
