@@ -236,9 +236,9 @@ function AppContent() {
     },
     {
       id: 'perm_sms',
-      name: 'SMS Messaging Intent',
-      androidName: 'android.permission.SEND_SMS',
-      description: 'Composes and sends text messages with recipient confirmation.',
+      name: 'SMS Messaging (Intent)',
+      androidName: 'android.intent.action.SENDTO',
+      description: 'Dispatches text messages safely via system SMS app without sensitive SMS permissions.',
       granted: true,
       isEssential: false,
       category: 'communication',

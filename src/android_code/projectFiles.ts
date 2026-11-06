@@ -540,10 +540,15 @@ dependencies {
     <uses-feature
         android:name="android.hardware.camera.flash"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
 
     <!-- Communication (Explicit confirmation required) -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <!-- Alarms, Reminders & Notifications -->
@@ -746,7 +751,6 @@ class MainActivity : ComponentActivity() {
     private val requiredPermissions = arrayOf(
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.CALL_PHONE,
-        Manifest.permission.SEND_SMS,
         Manifest.permission.READ_CONTACTS
     )
 
