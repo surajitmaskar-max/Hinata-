@@ -245,9 +245,9 @@ function AppContent() {
     },
     {
       id: 'perm_alarm',
-      name: 'Exact Alarm Scheduling',
-      androidName: 'android.permission.SCHEDULE_EXACT_ALARM',
-      description: 'Schedules precise reminders and alarms via Android AlarmManager.',
+      name: 'Alarm & Reminder Setting',
+      androidName: 'com.android.alarm.permission.SET_ALARM',
+      description: 'Sets reminders and alarms via the standard Android Clock service.',
       granted: true,
       isEssential: false,
       category: 'hardware',

@@ -135,7 +135,7 @@ jobs:
           echo "=========================================================="
           echo "Executing Android Lint..."
           echo "=========================================================="
-          ./gradlew lintDebug --stacktrace
+          ./gradlew lint --stacktrace
 
       - name: Build Release APK
         env:

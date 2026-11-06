@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">हिनाटा एआई</string>
+    <string name="app_tagline">आपकी बुद्धिमान दुनिया।</string>
+    <string name="accessibility_service_description">हिनाटा एआई स्क्रीन नेविगेट करने और हैंड्स-फ्री फोन ऑपरेशन स्वचालित करने में मदद करता है।</string>
+    <string name="notification_listener_description">हिनाटा एआई आने वाले संदेशों को पढ़ने और वॉयस अलर्ट देने की सुविधा देता है।</string>
+    <string name="channel_voice_service">हिनाटा ऑलवेज़-ऑन वेक वर्ड सर्विस</string>
+    <string name="channel_voice_description">माइक्रोफ़ोन सर्विस ऑन-डिवाइस \'हे हिनाटा\' कीवर्ड डिटेक्शन के लिए।</string>
+    <string name="greeting_bn">হাই! আমি হিনাটা। বলো, আজ তোমার জন্য কী করতে পারি?</string>
+    <string name="greeting_en">Hello! I\'m Hinata. I\'m ready to help you!</string>
+    <string name="greeting_hi">हाय! मैं हिनाटा हूँ। बताओ, आज मैं तुम्हारी क्या मदद करूँ?</string>
+    <string name="creator_name">Surajit Naskar</string>
+    <string name="about_created_by">निर्मित और विकसित किया गया Surajit Naskar द्वारा</string>
+    <string name="creator_response_en">My creator is Surajit Naskar. He created and developed HINATA AI.</string>
+    <string name="creator_response_bn">আমার Creator হলেন Surajit Naskar। তিনিই HINATA AI তৈরি ও ডেভেলপ করেছেন।</string>
+    <string name="creator_response_hi">मेरे Creator Surajit Naskar हैं। उन्होंने HINATA AI को बनाया और विकसित किया है।</string>
+</resources>

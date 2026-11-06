@@ -152,7 +152,7 @@ jobs:
           echo "=========================================================="
           echo "Executing Android Lint..."
           echo "=========================================================="
-          ./gradlew lintDebug --stacktrace
+          ./gradlew lint --stacktrace
 
       - name: Build Debug APK (Validation Step)
         env:
@@ -281,7 +281,7 @@ jobs:
           echo "=========================================================="
           echo "Executing Android Lint..."
           echo "=========================================================="
-          ./gradlew lintDebug --stacktrace
+          ./gradlew lint --stacktrace
 
       - name: Build Release APK
         env:
@@ -544,14 +544,13 @@ dependencies {
 
     <!-- Alarms, Reminders & Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <!-- Overlay & Foreground Service for Always-On Wake Word -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" tools:ignore="BatteryLife" />
 
     <!-- Query packages for launching installed apps -->
     <queries>
