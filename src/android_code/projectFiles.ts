@@ -531,11 +531,15 @@ dependencies {
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Hardware & Device Control -->
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
+
+    <!-- Optional Hardware Features -->
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
 
     <!-- Communication (Explicit confirmation required) -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
@@ -743,8 +747,7 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.CALL_PHONE,
         Manifest.permission.SEND_SMS,
-        Manifest.permission.READ_CONTACTS,
-        Manifest.permission.CAMERA
+        Manifest.permission.READ_CONTACTS
     )
 
     private val permissionLauncher = registerForActivityResult(

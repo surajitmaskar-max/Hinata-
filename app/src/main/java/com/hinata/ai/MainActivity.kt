@@ -27,8 +27,7 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.CALL_PHONE,
         Manifest.permission.SEND_SMS,
-        Manifest.permission.READ_CONTACTS,
-        Manifest.permission.CAMERA
+        Manifest.permission.READ_CONTACTS
     )
 
     private val permissionLauncher = registerForActivityResult(

@@ -9,11 +9,15 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Hardware & Device Control -->
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
+
+    <!-- Optional Hardware Features -->
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
 
     <!-- Communication (Always guarded with explicit user confirmation) -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
